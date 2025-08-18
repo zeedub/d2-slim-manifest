@@ -68,7 +68,7 @@ async function main() {
           socketTypeHash: socket.socketTypeHash
         })),
         equippingBlock:{
-          ammoType: weeapon.equippingBlock.ammoType
+          ammoType: weapon.equippingBlock.ammoType
         }
       }));
 
