@@ -1,0 +1,13 @@
+{
+  "name": "d2-slim-manifest",
+  "version": "1.0.0",
+  "description": "Fetch and slim Destiny 2 manifest JSON for weapons",
+  "type": "module",
+  "main": "scripts/fetchManifest.js",
+  "scripts": {
+    "start": "node scripts/fetchManifest.js"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
+}
