@@ -4,6 +4,7 @@ import fetch from "node-fetch";
 const API_KEY = process.env.BUNGIE_API_KEY;
 const BASE_URL = "https://www.bungie.net/Platform";
 const OUTPUT_FILE = "weapons-slim.json";
+const VERSION_FILE = "./lastVersion.txt";
 
 // Dummy helper for ammo type — replace with your real logic if needed
 const determineAmmoType = (weapon) => weapon.ammoType || 0;
@@ -17,58 +18,67 @@ async function main() {
       headers: { "X-API-Key": API_KEY },
     });
     const manifestData = await manifestRes.json();
+    const currentVersion = manifestData.Response.version;
     const paths = manifestData.Response.jsonWorldComponentContentPaths.en;
 
-    // 2️⃣ Fetch DestinyInventoryItemDefinition
+    // 2️⃣ Check last processed version
+    let lastVersion = null;
+    if (fs.existsSync(VERSION_FILE)) {
+      lastVersion = fs.readFileSync(VERSION_FILE, "utf-8");
+    }
+
+    // if (currentVersion === lastVersion) {
+    //   console.log("Manifest unchanged, skipping regeneration.");
+    //   return;
+    // }
+
+    console.log(`Manifest updated (old: ${lastVersion || "none"}, new: ${currentVersion})`);
+
+    // 3️⃣ Fetch DestinyInventoryItemDefinition
     const itemDefsRes = await fetch(`https://www.bungie.net${paths.DestinyInventoryItemDefinition}`, {
       headers: { "X-API-Key": API_KEY },
     });
     const itemDefs = await itemDefsRes.json();
 
-    // 3️⃣ Filter and slim weapons
+    // 4️⃣ Filter and slim weapons
     const weaponsSlim = Object.entries(itemDefs)
       .filter(([hash, item]) =>
         item.displayProperties?.name &&
         item.itemType === 3 &&
         (item.inventory?.tierType === 5 || item.inventory?.tierType === 6)
       )
-      .map(([hash, weapon]) => {
-        // ⚡ Trim each socket entry to only the needed fields
-        const trimmedSockets = weapon.sockets?.socketEntries?.map(s => ({
-          singleInitialItemHash: s.singleInitialItemHash,
-          reusablePlugItems: s.reusablePlugItems,
-          reusablePlugSetHash: s.reusablePlugSetHash,
-          randomizedPlugSetHash: s.randomizedPlugSetHash,
-          socketTypeHash: s.socketTypeHash
-        })) || [];
+      .map(([hash, weapon]) => ({
+        hash,
+        displayProperties: weapon.displayProperties,
+        screenshot: weapon.screenshot || "",
+        iconWatermarkedFeatured: weapon.iconWatermarkedFeatured || "",
+        itemTypeDisplayName: weapon.itemTypeDisplayName || "",
+        itemSubTypeDisplayName: weapon.itemSubTypeDisplayName || "",
+        ammoType: weapon.ammoType,
+        defaultDamageType: weapon.defaultDamageType || 0,
+        tierType: weapon.inventory?.tierType || 0,
+        tierTypeName: weapon.inventory?.tierTypeName || "",
+        traitIds: weapon.traitIds,
+        isHolofoil: weapon.isHolofoil,
+        isAdept: weapon.isAdept,
+        itemCategoryHashes: weapon.itemCategoryHashes || [],
+        breakerType: weapon.breakerType || 0,
+        collectibleHash: weapon.collectibleHash || "",
+        sockets: (weapon.sockets?.socketEntries || []).map(socket => ({
+          singleInitialItemHash: socket.singleInitialItemHash,
+          reusablePlugItems: socket.reusablePlugItems || [],
+          reusablePlugSetHash: socket.reusablePlugSetHash,
+          randomizedPlugSetHash: socket.randomizedPlugSetHash,
+          socketTypeHash: socket.socketTypeHash
+        }))
+      }));
 
-        return {
-          hash,
-          displayProperties: weapon.displayProperties,
-          screenshot: weapon.screenshot || "",
-          iconWatermarkedFeatured: weapon.iconWatermarkedFeatured || "",
-          itemTypeDisplayName: weapon.itemTypeDisplayName || "",
-          itemSubTypeDisplayName: weapon.itemSubTypeDisplayName || "",
-          ammoType: weapon.ammoType,
-          defaultDamageType: weapon.defaultDamageType || 0,
-          tierType: weapon.inventory?.tierType || 0,
-          tierTypeName: weapon.inventory?.tierTypeName || "",
-          traitIds: weapon.traitIds,
-          isHolofoil: weapon.isHolofoil,
-          isAdept: weapon.isAdept,
-          itemCategoryHashes: weapon.itemCategoryHashes || [],
-          breakerType: weapon.breakerType || 0,
-          collectibleHash: weapon.collectibleHash || "",
-          sockets: {
-            ...weapon.sockets,
-            socketEntries: trimmedSockets
-          }
-        };
-      });
-
-    fs.writeFileSync(OUTPUT_FILE, JSON.stringify(weaponsSlim)); // no spacing
+    // 5️⃣ Save JSON
+    fs.writeFileSync(OUTPUT_FILE, JSON.stringify(weaponsSlim, null, 2));
+    fs.writeFileSync(VERSION_FILE, currentVersion);
 
     console.log(`Saved ${weaponsSlim.length} slimmed weapons to ${OUTPUT_FILE}`);
+    console.log(`Updated version file to ${currentVersion}`);
     console.log("Sample:", weaponsSlim[0]);
 
   } catch (err) {
