@@ -80,16 +80,22 @@ async function main() {
     fs.writeFileSync(VERSION_FILE, currentVersion);
 
 
-
-    const plugsSlim = Object.entries(itemDefs)
+    const plugs = {};
+    Object.entries(itemDefs)
       .filter(([hash, item]) => item.itemType === 19)
-      .map(([hash, plug]) => ({
-        hash,
-        displayProperties: plug.displayProperties
-      }))
+      .forEach(([hash, plug]) => {
+        plugs[hash] = {
+          hash: parseInt(hash, 10),
+          displayProperties: plug.displayProperties
+        };
+      });
 
-    fs.writeFileSync(PLUGS_FILE, JSON.stringify(plugsSlim));
-    console.log(`Saved ${plugsSlim.length} plugs to ${PLUGS_FILE}`);
+fs.writeFileSync(PLUGS_FILE, JSON.stringify(plugs));
+
+   
+    
+
+    console.log(`Saved ${plugs.length} plugs to ${PLUGS_FILE}`);
 
     console.log(`Saved ${weaponsSlim.length} slimmed weapons to ${OUTPUT_FILE}`);
     console.log(`Updated version file to ${currentVersion}`);
