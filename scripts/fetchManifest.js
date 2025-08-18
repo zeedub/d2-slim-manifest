@@ -66,7 +66,8 @@ async function main() {
         };
       });
 
-    fs.writeFileSync(OUTPUT_FILE, JSON.stringify(weaponsSlim, null, 2));
+    fs.writeFileSync(OUTPUT_FILE, JSON.stringify(weaponsSlim)); // no spacing
+
     console.log(`Saved ${weaponsSlim.length} slimmed weapons to ${OUTPUT_FILE}`);
     console.log("Sample:", weaponsSlim[0]);
 
