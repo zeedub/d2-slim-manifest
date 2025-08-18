@@ -70,7 +70,7 @@ async function main() {
       }));
 
     // 5️⃣ Save weapons JSON
-    fs.writeFileSync(OUTPUT_FILE, JSON.stringify(weaponsSlim, null, 2));
+    fs.writeFileSync(OUTPUT_FILE, JSON.stringify(weaponsSlim));
     fs.writeFileSync(VERSION_FILE, currentVersion);
 
     // 6️⃣ Collect all plug hashes actually used by weapons
@@ -103,7 +103,7 @@ async function main() {
       }
     });
 
-    fs.writeFileSync(PLUGS_FILE, JSON.stringify(plugs, null, 2));
+    fs.writeFileSync(PLUGS_FILE, JSON.stringify(plugs));
 
     console.log(`Saved ${Object.keys(plugs).length} plugs to ${PLUGS_FILE}`);
     console.log(`Saved ${weaponsSlim.length} slimmed weapons to ${OUTPUT_FILE}`);
