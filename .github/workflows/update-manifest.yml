@@ -1,0 +1,35 @@
+name: Update Slim Manifest
+
+on:
+  schedule:
+    - cron: "0 3 * * *" # every day at 3AM UTC
+  workflow_dispatch: # lets you run manually too
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install axios
+
+      - name: Run script
+        run: node scripts/fetchManifest.js
+        env:
+          BUNGIE_API_KEY: ${{ secrets.BUNGIE_API_KEY }}
+
+      - name: Commit changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Update slim manifest"
+          git push
