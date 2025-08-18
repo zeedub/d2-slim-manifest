@@ -5,6 +5,8 @@ const API_KEY = process.env.BUNGIE_API_KEY;
 const BASE_URL = "https://www.bungie.net/Platform";
 const OUTPUT_FILE = "weapons-slim.json";
 const VERSION_FILE = "./lastVersion.txt";
+const PLUGS_FILE = "plugs.json";
+
 
 // Dummy helper for ammo type — replace with your real logic if needed
 const determineAmmoType = (weapon) => weapon.ammoType || 0;
