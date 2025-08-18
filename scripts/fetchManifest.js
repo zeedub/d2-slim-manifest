@@ -32,26 +32,39 @@ async function main() {
         item.itemType === 3 &&
         (item.inventory?.tierType === 5 || item.inventory?.tierType === 6)
       )
-      .map(([hash, weapon]) => ({
-        hash,
-        displayProperties: weapon.displayProperties,
-        screenshot: weapon.screenshot || "",
-        iconWatermarkedFeatured: weapon.iconWatermarkedFeatured || "",
-        itemTypeDisplayName: weapon.itemTypeDisplayName || "",
-        itemSubTypeDisplayName: weapon.itemSubTypeDisplayName || "",
-        ammoType: weapon.ammoType,
-        defaultDamageType: weapon.defaultDamageType || 0,
-        tierType: weapon.inventory?.tierType || 0,
-        tierTypeName: weapon.inventory?.tierTypeName || "",
-        traitIds: weapon.traitIds,
-        isHolofoil: weapon.isHolofoil,
-        isAdept: weapon.isAdept,
-        itemCategoryHashes: weapon.itemCategoryHashes || [],
-        breakerType: weapon.breakerType || 0,
-        collectibleHash: weapon.collectibleHash || "",
-        sockets: weapon.sockets
-      
-      }));
+      .map(([hash, weapon]) => {
+        // ⚡ Trim each socket entry to only the needed fields
+        const trimmedSockets = weapon.sockets?.socketEntries?.map(s => ({
+          singleInitialItemHash: s.singleInitialItemHash,
+          reusablePlugItems: s.reusablePlugItems,
+          reusablePlugSetHash: s.reusablePlugSetHash,
+          randomizedPlugSetHash: s.randomizedPlugSetHash,
+          socketTypeHash: s.socketTypeHash
+        })) || [];
+
+        return {
+          hash,
+          displayProperties: weapon.displayProperties,
+          screenshot: weapon.screenshot || "",
+          iconWatermarkedFeatured: weapon.iconWatermarkedFeatured || "",
+          itemTypeDisplayName: weapon.itemTypeDisplayName || "",
+          itemSubTypeDisplayName: weapon.itemSubTypeDisplayName || "",
+          ammoType: weapon.ammoType,
+          defaultDamageType: weapon.defaultDamageType || 0,
+          tierType: weapon.inventory?.tierType || 0,
+          tierTypeName: weapon.inventory?.tierTypeName || "",
+          traitIds: weapon.traitIds,
+          isHolofoil: weapon.isHolofoil,
+          isAdept: weapon.isAdept,
+          itemCategoryHashes: weapon.itemCategoryHashes || [],
+          breakerType: weapon.breakerType || 0,
+          collectibleHash: weapon.collectibleHash || "",
+          sockets: {
+            ...weapon.sockets,
+            socketEntries: trimmedSockets
+          }
+        };
+      });
 
     fs.writeFileSync(OUTPUT_FILE, JSON.stringify(weaponsSlim, null, 2));
     console.log(`Saved ${weaponsSlim.length} slimmed weapons to ${OUTPUT_FILE}`);
