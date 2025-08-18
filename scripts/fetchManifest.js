@@ -7,7 +7,6 @@ const OUTPUT_FILE = "weapons-slim.json";
 const VERSION_FILE = "./lastVersion.txt";
 const PLUGS_FILE = "plugs.json";
 
-
 // Dummy helper for ammo type — replace with your real logic if needed
 const determineAmmoType = (weapon) => weapon.ammoType || 0;
 
@@ -28,11 +27,6 @@ async function main() {
     if (fs.existsSync(VERSION_FILE)) {
       lastVersion = fs.readFileSync(VERSION_FILE, "utf-8");
     }
-
-    // if (currentVersion === lastVersion) {
-    //   console.log("Manifest unchanged, skipping regeneration.");
-    //   return;
-    // }
 
     console.log(`Manifest updated (old: ${lastVersion || "none"}, new: ${currentVersion})`);
 
@@ -75,31 +69,45 @@ async function main() {
         }))
       }));
 
-    // 5️⃣ Save JSON
-    fs.writeFileSync(OUTPUT_FILE, JSON.stringify(weaponsSlim));
+    // 5️⃣ Save weapons JSON
+    fs.writeFileSync(OUTPUT_FILE, JSON.stringify(weaponsSlim, null, 2));
     fs.writeFileSync(VERSION_FILE, currentVersion);
 
+    // 6️⃣ Collect all plug hashes actually used by weapons
+    const plugHashes = new Set();
 
+    weaponsSlim.forEach(weapon => {
+      weapon.sockets?.forEach(socket => {
+        if (socket.singleInitialItemHash) plugHashes.add(socket.singleInitialItemHash);
+        socket.reusablePlugItems?.forEach(plug => plugHashes.add(plug.plugItemHash));
+        if (socket.reusablePlugSetHash) {
+          const plugSet = itemDefs[socket.reusablePlugSetHash]?.reusablePlugItems;
+          plugSet?.forEach(p => plugHashes.add(p.plugItemHash));
+        }
+        if (socket.randomizedPlugSetHash) {
+          const plugSet = itemDefs[socket.randomizedPlugSetHash]?.reusablePlugItems;
+          plugSet?.forEach(p => plugHashes.add(p.plugItemHash));
+        }
+      });
+    });
+
+    // 7️⃣ Build plugs.json with only used plugs
     const plugs = {};
-    Object.entries(itemDefs)
-      .filter(([hash, item]) => item.itemType === 19)
-      .forEach(([hash, plug]) => {
+    plugHashes.forEach(hash => {
+      const plug = itemDefs[hash];
+      if (plug?.displayProperties) {
         plugs[hash] = {
-          hash: parseInt(hash, 10),
+          hash: Number(hash),
           displayProperties: plug.displayProperties
         };
-      });
+      }
+    });
 
-fs.writeFileSync(PLUGS_FILE, JSON.stringify(plugs));
+    fs.writeFileSync(PLUGS_FILE, JSON.stringify(plugs, null, 2));
 
-   
-    
-
-    console.log(`Saved ${plugs.length} plugs to ${PLUGS_FILE}`);
-
+    console.log(`Saved ${Object.keys(plugs).length} plugs to ${PLUGS_FILE}`);
     console.log(`Saved ${weaponsSlim.length} slimmed weapons to ${OUTPUT_FILE}`);
-    console.log(`Updated version file to ${currentVersion}`);
-    console.log("Sample:", weaponsSlim[0]);
+    console.log("Sample weapon:", weaponsSlim[0]);
 
   } catch (err) {
     console.error("Error:", err.message);
