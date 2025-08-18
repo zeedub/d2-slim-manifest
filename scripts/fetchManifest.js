@@ -1,53 +1,35 @@
-// fetchManifest.js
 import fs from "fs";
-import path from "path";
 import fetch from "node-fetch";
 
 const API_KEY = process.env.BUNGIE_API_KEY;
 const BASE_URL = "https://www.bungie.net/Platform";
+const OUTPUT_FILE = "weapons.json";
 
-// ================================================
-// fetchManifest
-// ================================================
-async function fetchManifest() {
-  console.log("Fetching Bungie manifest...");
-  const res = await fetch(`${BASE_URL}/Destiny2/Manifest/`, {
-    headers: { "X-API-Key": API_KEY }
-  });
-
-  if (!res.ok) throw new Error(`Manifest fetch failed: ${res.status}`);
-  const data = await res.json();
-  return data.Response;
-}
-
-// ================================================
-// fetchDefinition
-// ================================================
-async function fetchDefinition(pathUrl) {
-  const url = `https://www.bungie.net${pathUrl}`;
-  console.log("Fetching definition:", url);
-
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Definition fetch failed: ${res.status}`);
-  return res.json();
-}
-
-// ================================================
-// main
-// ================================================
 async function main() {
   try {
-    const manifest = await fetchManifest();
+    console.log("Loading manifest...");
 
-    // Get InventoryItemDefinition path (English)
-    const itemDefPath = manifest.jsonWorldComponentContentPaths.en
-      .DestinyInventoryItemDefinition;
+    // 1️⃣ Get current manifest info
+    const manifestRes = await fetch(`${BASE_URL}/Destiny2/Manifest/`, {
+      headers: { "X-API-Key": API_KEY },
+    });
+    if (!manifestRes.ok) throw new Error(`Manifest fetch failed: ${manifestRes.status}`);
+    const manifestData = await manifestRes.json();
+    const currentVersion = manifestData.Response.version;
+    const paths = manifestData.Response.jsonWorldComponentContentPaths.en;
 
-    const allItems = await fetchDefinition(itemDefPath);
+    console.log("Current version:", currentVersion);
 
-    // Filter down weapons only
+    // 2️⃣ Fetch DestinyInventoryItemDefinition
+    const itemDefsRes = await fetch(`https://www.bungie.net${paths.DestinyInventoryItemDefinition}`, {
+      headers: { "X-API-Key": API_KEY },
+    });
+    if (!itemDefsRes.ok) throw new Error(`Item defs fetch failed: ${itemDefsRes.status}`);
+    const itemDefs = await itemDefsRes.json();
+
+    // 3️⃣ Filter weapons
     const weapons = {};
-    for (const [hash, item] of Object.entries(allItems)) {
+    for (const [hash, item] of Object.entries(itemDefs)) {
       if (
         item.displayProperties?.name &&
         item.itemType === 3 &&
@@ -58,16 +40,15 @@ async function main() {
           name: item.displayProperties.name,
           icon: item.displayProperties.icon,
           tier: item.inventory?.tierType,
-          type: item.itemTypeDisplayName
+          type: item.itemTypeDisplayName,
         };
       }
     }
 
-    console.log(`Filtered weapons: ${Object.keys(weapons).length}`);
+    console.log("Filtered weapons:", Object.keys(weapons).length);
 
-    const outputPath = path.resolve("weapons.json");
-    fs.writeFileSync(outputPath, JSON.stringify(weapons, null, 2));
-    console.log(`Saved to ${outputPath}`);
+    fs.writeFileSync(OUTPUT_FILE, JSON.stringify(weapons, null, 2));
+    console.log(`Saved to ${OUTPUT_FILE}`);
   } catch (err) {
     console.error("Error:", err.message);
     process.exit(1);
