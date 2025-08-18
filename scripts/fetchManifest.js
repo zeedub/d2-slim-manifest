@@ -66,7 +66,10 @@ async function main() {
           reusablePlugSetHash: socket.reusablePlugSetHash,
           randomizedPlugSetHash: socket.randomizedPlugSetHash,
           socketTypeHash: socket.socketTypeHash
-        }))
+        })),
+        equippingBlock:{
+          ammoType: equippingBlock.ammoType
+        }
       }));
 
     // 5️⃣ Save weapons JSON
