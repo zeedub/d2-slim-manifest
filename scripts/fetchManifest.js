@@ -76,14 +76,14 @@ async function main() {
       }));
 
     // 5️⃣ Save JSON
-    fs.writeFileSync(OUTPUT_FILE, JSON.stringify(weaponsSlim, null, 2));
+    fs.writeFileSync(OUTPUT_FILE, JSON.stringify(weaponsSlim));
     fs.writeFileSync(VERSION_FILE, currentVersion);
 
     const plugs = Object.entries(itemDefs)
       .filter(([hash, item]) => item.itemType === 19)
       .map(([hash, plug]) => plug); // ✅ exact object
 
-    fs.writeFileSync(PLUGS_FILE, JSON.stringify(plugs, null, 2));
+    fs.writeFileSync(PLUGS_FILE, JSON.stringify(plugs));
     console.log(`Saved ${plugs.length} plugs to ${PLUGS_FILE}`);
 
     console.log(`Saved ${weaponsSlim.length} slimmed weapons to ${OUTPUT_FILE}`);
