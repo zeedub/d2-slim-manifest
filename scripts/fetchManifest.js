@@ -78,12 +78,14 @@ console.log(`Found ${holofoilWeapons.length} holofoil weapons`);
 
 // Check a few holofoil weapons for their icon properties
 holofoilWeapons.slice(0, 3).forEach(weapon => {
+  const originalWeapon = itemDefs[weapon.hash];
   console.log(`Holofoil weapon: ${weapon.displayProperties.name}`);
   console.log(`  Regular icon: ${weapon.displayProperties.icon}`);
-  console.log(`  Watermarked icon: ${weapon.iconWatermarkedFeatured}`);
-  console.log(`  Has iconWatermark: ${!!itemDefs[weapon.hash].iconWatermark}`);
+  console.log(`  Watermarked featured: ${weapon.iconWatermarkedFeatured}`);
+  console.log(`  IconWatermark (boolean): ${originalWeapon.iconWatermark}`);
+  console.log(`  DisplayProperties iconWatermark: ${originalWeapon.displayProperties?.iconWatermark || 'undefined'}`);
+  console.log(`  All icon-related props:`, Object.keys(originalWeapon).filter(k => k.toLowerCase().includes('icon')));
 });
-
     // 5️⃣ Save weapons JSON
     fs.writeFileSync(OUTPUT_FILE, JSON.stringify(weaponsSlim));
     fs.writeFileSync(VERSION_FILE, currentVersion);
