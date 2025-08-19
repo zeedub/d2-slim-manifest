@@ -72,6 +72,18 @@ async function main() {
         }
       }));
 
+    // Add this after creating weaponsSlim to debug holofoil icons
+const holofoilWeapons = weaponsSlim.filter(w => w.isHolofoil);
+console.log(`Found ${holofoilWeapons.length} holofoil weapons`);
+
+// Check a few holofoil weapons for their icon properties
+holofoilWeapons.slice(0, 3).forEach(weapon => {
+  console.log(`Holofoil weapon: ${weapon.displayProperties.name}`);
+  console.log(`  Regular icon: ${weapon.displayProperties.icon}`);
+  console.log(`  Watermarked icon: ${weapon.iconWatermarkedFeatured}`);
+  console.log(`  Has iconWatermark: ${!!itemDefs[weapon.hash].iconWatermark}`);
+});
+
     // 5️⃣ Save weapons JSON
     fs.writeFileSync(OUTPUT_FILE, JSON.stringify(weaponsSlim));
     fs.writeFileSync(VERSION_FILE, currentVersion);
