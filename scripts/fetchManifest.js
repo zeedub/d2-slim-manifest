@@ -81,59 +81,20 @@ async function main() {
     // 6️⃣ Collect all plug hashes actually used by weapons
     const plugHashes = new Set();
 
-    // After you create weaponsSlim, before saving JSON
-weaponsSlim.forEach(weapon => {
-  // Only log for Opaque Hourglass
-  const isOpaqueHourglass = weapon.displayProperties?.name === "Opaque Hourglass";
-
-  if (isOpaqueHourglass) {
-    console.log(`\n🔎 Processing Opaque Hourglass: ${weapon.hash}`);
-    weapon.sockets?.forEach((socket, i) => {
-      console.log(`\nSocket ${i}:`, {
-        singleInitialItemHash: socket.singleInitialItemHash,
-        reusablePlugItems: socket.reusablePlugItems.length,
-        reusablePlugSetHash: socket.reusablePlugSetHash,
-        randomizedPlugSetHash: socket.randomizedPlugSetHash,
-        socketTypeHash: socket.socketTypeHash
+    weaponsSlim.forEach(weapon => {
+      weapon.sockets?.forEach(socket => {
+        if (socket.singleInitialItemHash) plugHashes.add(socket.singleInitialItemHash);
+        socket.reusablePlugItems?.forEach(plug => plugHashes.add(plug.plugItemHash));
+        if (socket.reusablePlugSetHash) {
+          const plugSet = itemDefs[socket.reusablePlugSetHash]?.reusablePlugItems;
+          plugSet?.forEach(p => plugHashes.add(p.plugItemHash));
+        }
+        if (socket.randomizedPlugSetHash) {
+          const plugSet = itemDefs[socket.randomizedPlugSetHash]?.reusablePlugItems;
+          plugSet?.forEach(p => plugHashes.add(p.plugItemHash));
+        }
       });
-
-      // Log default perk
-      if (socket.singleInitialItemHash) {
-        const plug = itemDefs[socket.singleInitialItemHash];
-        console.log("  Default plug:", plug?.displayProperties?.name || "NOT FOUND", socket.singleInitialItemHash);
-      }
-
-      // Log reusablePlugItems
-      if (socket.reusablePlugItems?.length) {
-        socket.reusablePlugItems.forEach(plug => {
-          const plugDef = itemDefs[plug.plugItemHash];
-          console.log("  Reusable plug item:", plugDef?.displayProperties?.name || "NOT FOUND", plug.plugItemHash);
-        });
-      }
-
-      // Log reusablePlugSet
-      if (socket.reusablePlugSetHash) {
-        const plugSet = itemDefs[socket.reusablePlugSetHash];
-        console.log("  Reusable plug set:", plugSet?.reusablePlugItems?.length || 0, socket.reusablePlugSetHash);
-        plugSet?.reusablePlugItems?.forEach(p => {
-          const plugDef = itemDefs[p.plugItemHash];
-          console.log("    PlugSet item:", plugDef?.displayProperties?.name || "NOT FOUND", p.plugItemHash);
-        });
-      }
-
-      // Log randomizedPlugSet
-      if (socket.randomizedPlugSetHash) {
-        const plugSet = itemDefs[socket.randomizedPlugSetHash];
-        console.log("  Randomized plug set:", plugSet?.reusablePlugItems?.length || 0, socket.randomizedPlugSetHash);
-        plugSet?.reusablePlugItems?.forEach(p => {
-          const plugDef = itemDefs[p.plugItemHash];
-          console.log("    Randomized item:", plugDef?.displayProperties?.name || "NOT FOUND", p.plugItemHash);
-        });
-      }
     });
-  }
-});
-
 
     // 7️⃣ Build plugs.json with only used plugs
     const plugs = {};
